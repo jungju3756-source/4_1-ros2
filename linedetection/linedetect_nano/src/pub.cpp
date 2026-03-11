@@ -1,6 +1,6 @@
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/image.hpp>
-#include <cv_bridge/cv_bridge.h>
+#include <cv_bridge/cv_bridge.hpp>
 #include <opencv2/opencv.hpp>
 
 class VideoPublisher : public rclcpp::Node
@@ -12,7 +12,7 @@ public:
         publisher_ = this->create_publisher<sensor_msgs::msg::Image>("video", 10);
 
         // 동영상 경로 설정
-        cap.open("/home/linux/simulation/5_lt_cw_100rpm_out.mp4");
+        cap.open("/home/aim88/simulation/7_lt_ccw_100rpm_in.mp4");
 
         if(!cap.isOpened()){
             RCLCPP_ERROR(this->get_logger(), "!!! 영상 파일을 열 수 없습니다 !!!");
@@ -31,11 +31,13 @@ private:
         cap >> frame;
 
         if(frame.empty()) {
-            RCLCPP_INFO(this->get_logger(), "영상 끝");
+            RCLCPP_INFO(this->get_logger(), "영상 재시작");
+            cap.set(cv::CAP_PROP_POS_FRAMES, 0);
             return;
         }
 
         auto msg = cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", frame).toImageMsg();
+        RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "이미지 송신 중...");
         publisher_->publish(*msg);
     }
 
