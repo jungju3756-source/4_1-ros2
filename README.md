@@ -8,7 +8,7 @@ https://youtu.be/L2ChE_xFBR8
 2. 모션제어 동영상
 
 5_lt_cw_100rpm_out:
-https://youtu.be/PuPsWNEl-8c
+https://youtu.be/wcZeKPD1KPw
 
 7_lt_ccw_100rpm_in:
-https://youtu.be/L2ChE_xFBR8
+https://youtu.be/8lc1985FsZg
