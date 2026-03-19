@@ -1,0 +1,14 @@
+1. 라인 검출 동영상
+5_lt_cw_100rpm_out:
+https://youtu.be/PuPsWNEl-8c
+
+7_lt_ccw_100rpm_in:
+https://youtu.be/L2ChE_xFBR8
+
+2. 모션제어 동영상
+
+5_lt_cw_100rpm_out:
+https://youtu.be/PuPsWNEl-8c
+
+7_lt_ccw_100rpm_in:
+https://youtu.be/L2ChE_xFBR8
