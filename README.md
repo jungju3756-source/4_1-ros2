@@ -13,3 +13,6 @@ https://youtu.be/wcZeKPD1KPw
 
 7_lt_ccw_100rpm_in:
 https://youtu.be/8lc1985FsZg
+
+구동 모습 
+https://youtube.com/shorts/Z9Uo-9q6m84?feature=share
