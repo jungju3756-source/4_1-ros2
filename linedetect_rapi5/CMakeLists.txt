@@ -25,7 +25,20 @@ ament_target_dependencies(
   "OpenCV"
 )
 
-install(TARGETS pub
+add_executable(cam_pub src/cam_pub.cpp)
+target_include_directories(cam_pub PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include/${PROJECT_NAME}>)
+target_compile_features(cam_pub PUBLIC c_std_99 cxx_std_17)
+ament_target_dependencies(
+  cam_pub
+  "rclcpp"
+  "sensor_msgs"
+  "cv_bridge"
+  "OpenCV"
+)
+
+install(TARGETS pub cam_pub
   DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
