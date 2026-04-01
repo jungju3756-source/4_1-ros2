@@ -33,6 +33,9 @@ lidarplot/
 sudo apt update
 sudo apt install python3-matplotlib
 
+---
+
+## 실행
 빌드 
 # 워크스페이스 이동
 cd ~/colcon_ws
