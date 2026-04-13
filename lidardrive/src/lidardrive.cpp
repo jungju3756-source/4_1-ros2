@@ -40,7 +40,7 @@ public:
             std::bind(&LidarDriveNode::scanCb, this, std::placeholders::_1));
 
         // /vel_cmd 발행 (Pi5 dxl_nano 구독)
-        vel_pub_ = this->create_publisher<geometry_msgs::msg::Vector3>("/vel_cmd", 10);
+        vel_pub_ = this->create_publisher<geometry_msgs::msg::Vector3>("topic_dxlpub", 10);
 
         // 결과 mp4 저장 (10fps)
         writer_.open("lidardrive_output.mp4",
@@ -51,7 +51,7 @@ public:
         key_thread_ = std::thread(&LidarDriveNode::keyboardLoop, this);
 
         RCLCPP_INFO(this->get_logger(),
-            "LidarDrive 시작. /scan 구독 → 장애물회피 → /vel_cmd 발행");
+            "LidarDrive 시작. /scan 구독 → 장애물회피 → topic_dxlpub 발행");
         printf("=== LidarDrive ===\n");
         printf("  s : 장애물 회피 자율주행 시작\n");
         printf("  q : 정지\n");
@@ -175,6 +175,32 @@ private:
             error = mid_x - CENTER;
         }
 
+        // ── 3-1. 정면 장애물 강제 회피 ──────────────────────────
+        // 중앙 ±FRONT_W px 폭의 전방 구역에 장애물이 있으면
+        // error 값과 무관하게 공간이 넓은 쪽으로 강제 회피
+        const int FRONT_W = 50;  // 중앙 좌우 각 50px (총 100px 폭)
+        bool front_blocked = false;
+        for (int fy = 0; fy < CENTER && !front_blocked; fy++) {
+            for (int fx = CENTER - FRONT_W; fx <= CENTER + FRONT_W && !front_blocked; fx++) {
+                cv::Vec3b p = frame.at<cv::Vec3b>(fy, fx);
+                if (p[2] > 150 && p[1] < 80 && p[0] < 80) {
+                    front_blocked = true;
+                }
+            }
+        }
+
+        if (front_blocked) {
+            // 더 먼 쪽(공간 넓은 쪽)으로 강제 회피
+            // no_right: 우측 비어있음 → 우회전 (error > 0)
+            // no_left : 좌측 비어있음 → 좌회전 (error < 0)
+            // 양쪽 모두 있을 때: 더 먼 쪽으로 회피
+            if (no_right || (!no_left && min_dist_r >= min_dist_l)) {
+                error = 150;   // 우측 공간 넓음 → 우회전
+            } else {
+                error = -150;  // 좌측 공간 넓음 → 좌회전
+            }
+        }
+
         // ── 4. 속도 명령 계산 및 발행 ────────────────────────────
         float left_vel  =  (float)BASE_VEL + error * K_GAIN;
         float right_vel = -((float)BASE_VEL - error * K_GAIN);
@@ -190,8 +216,10 @@ private:
         vel_pub_->publish(msg);
 
         RCLCPP_INFO(this->get_logger(),
-            "[%s] err=%d L=%.1f R=%.1f",
-            mode_.load() ? "RUN" : "STOP", error, msg.x, msg.y);
+            "[%s]%s err=%d L=%.1f R=%.1f",
+            mode_.load() ? "RUN" : "STOP",
+            front_blocked ? " [FRONT!]" : "",
+            error, msg.x, msg.y);
 
         // ── 5. 시각화 ─────────────────────────────────────────────
         cv::Mat vis = frame.clone();
@@ -201,6 +229,11 @@ private:
                  cv::Scalar(150,150,150), 1);
         cv::line(vis, cv::Point(CENTER, 0), cv::Point(CENTER, CENTER),
                  cv::Scalar(150,150,150), 1);
+
+        // 정면 위험구역 표시 (front_blocked 시 황색 사각형)
+        cv::Scalar zone_color = front_blocked ? cv::Scalar(0,200,200) : cv::Scalar(200,200,200);
+        cv::rectangle(vis, cv::Point(CENTER - FRONT_W, 0),
+                      cv::Point(CENTER + FRONT_W, CENTER - 1), zone_color, 1);
 
         // 좌측 최단 장애물 화살표 (녹색)
         if (!no_left) {
@@ -228,8 +261,10 @@ private:
 
         // 상태 텍스트
         char buf[128];
-        snprintf(buf, sizeof(buf), "[%s] err=%d  L=%.1f R=%.1f",
-                 mode_ ? "RUN" : "STOP", error, left_vel, right_vel);
+        snprintf(buf, sizeof(buf), "[%s]%s err=%d  L=%.1f R=%.1f",
+                 mode_ ? "RUN" : "STOP",
+                 front_blocked ? " [FRONT]" : "",
+                 error, left_vel, right_vel);
         cv::putText(vis, buf, cv::Point(5, 20),
                     cv::FONT_HERSHEY_SIMPLEX, 0.5,
                     mode_ ? cv::Scalar(0,128,0) : cv::Scalar(0,0,200), 1);
