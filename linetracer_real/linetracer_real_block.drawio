@@ -1,0 +1,360 @@
+<mxfile host="app.diagrams.net" version="21.0.0">
+  <diagram id="linetracer-real" name="linetracer_real 블럭도">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2300" pageHeight="1200" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- ============================================================ -->
+        <!-- Pi5 SENSOR 라벨 -->
+        <!-- ============================================================ -->
+        <mxCell id="lbl_pi5_sensor" value="🔵 센서&#xa;Raspberry Pi5" style="text;html=1;align=center;verticalAlign=middle;fontStyle=1;fontSize=13;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="10" y="20" width="200" height="55" as="geometry" />
+        </mxCell>
+
+        <!-- Pi5 Camera -->
+        <mxCell id="camera" value="📷 카메라&#xa;camera_ros2&#xa;libcamerasrc → JPEG" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#0066cc;strokeWidth=2;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="10" y="450" width="200" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- Pi5 ACTUATOR 라벨 -->
+        <!-- ============================================================ -->
+        <mxCell id="lbl_pi5_act" value="🔴 액추에이터&#xa;Raspberry Pi5" style="text;html=1;align=center;verticalAlign=middle;fontStyle=1;fontSize=13;fillColor=#f8d7da;strokeColor=#dc3545;strokeWidth=2;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="2080" y="20" width="200" height="55" as="geometry" />
+        </mxCell>
+
+        <!-- Pi5 Dynamixel Motor -->
+        <mxCell id="motor" value="⚙️ Dynamixel 모터&#xa;dxl_rapi5&#xa;Vector3.x = 좌측 모터&#xa;Vector3.y = 우측 모터" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8d7da;strokeColor=#dc3545;strokeWidth=2;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="2080" y="310" width="200" height="90" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- WSL2 OUTER BOX -->
+        <!-- ============================================================ -->
+        <mxCell id="bg_wsl" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#1b5e20;strokeWidth=5;opacity=40;pointerEvents=0;" vertex="1" parent="1">
+          <mxGeometry x="230" y="10" width="1830" height="1140" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl_wsl" value="🟩  WSL2 — linetracer_real 노드 (line_tracker_node)  /  자율주행 SW" style="text;html=1;align=center;verticalAlign=middle;fontStyle=1;fontSize=15;fillColor=none;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="230" y="10" width="1830" height="45" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- 인지 (Perception) SECTION -->
+        <!-- ============================================================ -->
+        <mxCell id="bg_perc" value="🟢  인지 (Perception)  —  image_callback()" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#c8e6c9;strokeColor=#2e7d32;strokeWidth=3;verticalAlign=top;fontStyle=1;fontSize=13;opacity=60;" vertex="1" parent="1">
+          <mxGeometry x="250" y="55" width="430" height="900" as="geometry" />
+        </mxCell>
+
+        <!-- P0: 콜백 진입 -->
+        <mxCell id="P0" value="⓪ 콜백 진입&#xa;image_callback(CompressedImage::SharedPtr msg)&#xa;startTime = steady_clock::now()" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#a5d6a7;strokeColor=#2e7d32;strokeWidth=2;fontSize=10;align=left;spacingLeft=6;" vertex="1" parent="1">
+          <mxGeometry x="270" y="110" width="390" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- P1: 파라미터 갱신 -->
+        <mxCell id="P1" value="① 파라미터 런타임 갱신&#xa;k_  = get_parameter(&quot;k&quot;).as_double()  [기본 0.14]&#xa;base_vel_  = get_parameter(&quot;base_vel&quot;).as_int()  [기본 120]&#xa;→ 매 프레임 갱신으로 ros2 param set 즉시 반영" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#a5d6a7;strokeColor=#2e7d32;strokeWidth=2;fontSize=10;align=left;spacingLeft=6;" vertex="1" parent="1">
+          <mxGeometry x="270" y="182" width="390" height="75" as="geometry" />
+        </mxCell>
+
+        <!-- P2: JPEG 디코딩 -->
+        <mxCell id="P2" value="② JPEG 디코딩&#xa;cv::Mat frame = cv::imdecode(cv::Mat(msg-&gt;data),&#xa;                             cv::IMREAD_COLOR)&#xa;실패(frame.empty()) 시 early return" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#a5d6a7;strokeColor=#2e7d32;strokeWidth=2;fontSize=10;align=left;spacingLeft=6;" vertex="1" parent="1">
+          <mxGeometry x="270" y="269" width="390" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- P3: ROI 추출 -->
+        <mxCell id="P3" value="③ ROI 추출  —  setROI()&#xa;cv::Rect(0,  rows*3/4,  cols,  rows/4)&#xa;→ 하단 1/4 영역  /  .clone() 으로 깊은 복사&#xa;   (원본 frame 훼손 방지)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#a5d6a7;strokeColor=#2e7d32;strokeWidth=2;fontSize=10;align=left;spacingLeft=6;" vertex="1" parent="1">
+          <mxGeometry x="270" y="351" width="390" height="72" as="geometry" />
+        </mxCell>
+
+        <!-- P4: 그레이스케일 -->
+        <mxCell id="P4" value="④ 그레이스케일 변환&#xa;cv::cvtColor(roi, roi, cv::COLOR_BGR2GRAY)&#xa;3채널(BGR) → 1채널(밝기값 0~255)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#a5d6a7;strokeColor=#2e7d32;strokeWidth=2;fontSize=10;align=left;spacingLeft=6;" vertex="1" parent="1">
+          <mxGeometry x="270" y="435" width="390" height="62" as="geometry" />
+        </mxCell>
+
+        <!-- P5: 밝기 정규화 -->
+        <mxCell id="P5" value="⑤ 밝기 정규화&#xa;roi += cv::Scalar(100) - cv::mean(roi)&#xa;ROI 평균 밝기를 100으로 강제 조정&#xa;→ 조명 환경 변화에 강건" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#a5d6a7;strokeColor=#2e7d32;strokeWidth=2;fontSize=10;align=left;spacingLeft=6;" vertex="1" parent="1">
+          <mxGeometry x="270" y="509" width="390" height="72" as="geometry" />
+        </mxCell>
+
+        <!-- P6: 이진화 -->
+        <mxCell id="P6" value="⑥ 이진화  (THRESH_BINARY, 임계값 = 150)&#xa;cv::threshold(roi, roi, 150, 255, THRESH_BINARY)&#xa;픽셀값 &gt; 150  →  255 흰색 (객체, 라인 후보)&#xa;픽셀값 ≤ 150  →    0 검정 (배경)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#a5d6a7;strokeColor=#2e7d32;strokeWidth=2;fontSize=10;align=left;spacingLeft=6;" vertex="1" parent="1">
+          <mxGeometry x="270" y="593" width="390" height="72" as="geometry" />
+        </mxCell>
+
+        <!-- P7: Connected Component -->
+        <mxCell id="P7" value="⑦ Connected Component 분석&#xa;cv::connectedComponentsWithStats(&#xa;    bin_roi, labels_, stats, centroids)&#xa;stats    : [left, top, width, height, area] per blob&#xa;centroids: (cx, cy) per blob&#xa;0번 = 배경,  1번부터 실제 객체" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#a5d6a7;strokeColor=#2e7d32;strokeWidth=2;fontSize=10;align=left;spacingLeft=6;" vertex="1" parent="1">
+          <mxGeometry x="270" y="677" width="390" height="90" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- 판단 (Decision) SECTION -->
+        <!-- ============================================================ -->
+        <mxCell id="bg_deci" value="🟡  판단 (Decision)  —  findLine() + 오차 계산 + 모드 결정" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff9c4;strokeColor=#f57f17;strokeWidth=3;verticalAlign=top;fontStyle=1;fontSize=13;opacity=60;" vertex="1" parent="1">
+          <mxGeometry x="700" y="55" width="470" height="800" as="geometry" />
+        </mxCell>
+
+        <!-- D1: 후보 필터링 -->
+        <mxCell id="D1" value="① 후보 blob 필터링&#xa;for i in 1 .. n_labels  (0번 = 배경 제외)&#xa;  if stats(i, CC_STAT_AREA) &gt; 100  →  후보 인정&#xa;  (면적 100 이하 = 노이즈로 무시)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff176;strokeColor=#f57f17;strokeWidth=2;fontSize=10;align=left;spacingLeft=6;" vertex="1" parent="1">
+          <mxGeometry x="720" y="110" width="430" height="72" as="geometry" />
+        </mxCell>
+
+        <!-- D2: 1단계 탐색 -->
+        <mxCell id="D2" value="② [1단계] 넓은 그물 탐색 (반경 150px)&#xa;dist = cv::norm(centroid_i − (last_line_x_, last_line_y_))&#xa;if dist &lt; min_dist  &amp;&amp;  dist ≤ 150.0px&#xa;    min_index = i    ← 직전 추적점에 가장 가까운 후보" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff176;strokeColor=#f57f17;strokeWidth=2;fontSize=10;align=left;spacingLeft=6;" vertex="1" parent="1">
+          <mxGeometry x="720" y="194" width="430" height="75" as="geometry" />
+        </mxCell>
+
+        <!-- D3: 추적점 1차 갱신 -->
+        <mxCell id="D3" value="③ 추적점 1차 갱신&#xa;if min_index ≠ -1  &amp;&amp;  min_dist ≤ 150px :&#xa;    last_line_x_ = centroids(min_index, 0)&#xa;    last_line_y_ = centroids(min_index, 1)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff176;strokeColor=#f57f17;strokeWidth=2;fontSize=10;align=left;spacingLeft=6;" vertex="1" parent="1">
+          <mxGeometry x="720" y="281" width="430" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- D4: 2단계 재탐색 -->
+        <mxCell id="D4" value="④ [2단계] 좁은 그물 재탐색 (면적 필터 없음)&#xa;for i in 1 .. stats.rows :&#xa;    d = cv::norm(centroid_i − (last_line_x_, last_line_y_))&#xa;    if d &lt; best :  best = d ,  idx = i" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff176;strokeColor=#f57f17;strokeWidth=2;fontSize=10;align=left;spacingLeft=6;" vertex="1" parent="1">
+          <mxGeometry x="720" y="363" width="430" height="72" as="geometry" />
+        </mxCell>
+
+        <!-- D5: 다이아몬드 -->
+        <mxCell id="D5" value="⑤  best ≤ 30.0 px ?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffe082;strokeColor=#f57f17;strokeWidth=2;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="800" y="447" width="270" height="65" as="geometry" />
+        </mxCell>
+
+        <!-- D6: YES -->
+        <mxCell id="D6" value="best_idx = idx&#xa;(라인 유효 검출)&#xa;빨간 박스 표시" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff176;strokeColor=#2e7d32;strokeWidth=2;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="720" y="525" width="200" height="62" as="geometry" />
+        </mxCell>
+
+        <!-- D7: NO -->
+        <mxCell id="D7" value="best_idx = -1&#xa;(라인 손실 / 노이즈)&#xa;last_line_ 은 유지" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff176;strokeColor=#c62828;strokeWidth=2;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="950" y="525" width="200" height="62" as="geometry" />
+        </mxCell>
+
+        <!-- D8: 오차 계산 -->
+        <mxCell id="D8" value="⑥ 오차(error) 계산&#xa;error = (bin_roi.cols / 2.0) - last_line_x_&#xa;양수 → 라인이 중앙 기준 왼쪽 치우침 (우회전 필요)&#xa;음수 → 라인이 오른쪽 치우침 (좌회전 필요)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff176;strokeColor=#f57f17;strokeWidth=2;fontSize=10;align=left;spacingLeft=6;" vertex="1" parent="1">
+          <mxGeometry x="720" y="601" width="430" height="72" as="geometry" />
+        </mxCell>
+
+        <!-- D9: 다이아몬드 -->
+        <mxCell id="D9" value="⑦  주행 모드?&#xa;atomic&lt;bool&gt; mode_" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffe082;strokeColor=#f57f17;strokeWidth=2;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="810" y="687" width="250" height="65" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- 제어 (Control) SECTION -->
+        <!-- ============================================================ -->
+        <mxCell id="bg_ctrl" value="🔴  제어 (Control)  —  P-Controller + 퍼블리시" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffcdd2;strokeColor=#c62828;strokeWidth=3;verticalAlign=top;fontStyle=1;fontSize=13;opacity=60;" vertex="1" parent="1">
+          <mxGeometry x="1190" y="55" width="440" height="640" as="geometry" />
+        </mxCell>
+
+        <!-- C1: 주행 -->
+        <mxCell id="C1" value="① 주행  (mode_ = true)&#xa;vel_msg.x = base_vel_  -  error * k_   ← 좌측 모터&#xa;vel_msg.y = -(base_vel_ + error * k_)  ← 우측 모터&#xa;차동 구동: 좌우 부호 반대로 직진/회전" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ef9a9a;strokeColor=#c62828;strokeWidth=2;fontSize=10;align=left;spacingLeft=6;" vertex="1" parent="1">
+          <mxGeometry x="1210" y="110" width="400" height="78" as="geometry" />
+        </mxCell>
+
+        <!-- C2: 정지 -->
+        <mxCell id="C2" value="② 정지  (mode_ = false)&#xa;vel_msg.x = 0   vel_msg.y = 0&#xa;모터 명령 0 으로 퍼블리시" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ef9a9a;strokeColor=#c62828;strokeWidth=2;fontSize=10;align=left;spacingLeft=6;" vertex="1" parent="1">
+          <mxGeometry x="1210" y="200" width="400" height="65" as="geometry" />
+        </mxCell>
+
+        <!-- C3: 퍼블리시 -->
+        <mxCell id="C3" value="③ Vector3 퍼블리시&#xa;vel_pub_-&gt;publish(vel_msg)&#xa;topic : topic_dxlpub&#xa;type  : geometry_msgs/Vector3&#xa;QoS   : Reliable  KeepLast(10)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ef9a9a;strokeColor=#c62828;strokeWidth=2;fontSize=10;align=left;spacingLeft=6;" vertex="1" parent="1">
+          <mxGeometry x="1210" y="278" width="400" height="85" as="geometry" />
+        </mxCell>
+
+        <!-- C4: 로그 -->
+        <mxCell id="C4" value="④ 성능 측정 &amp; 로그 출력&#xa;endTime = steady_clock::now()&#xa;totalTime = duration&lt;float, milli&gt;(end - start).count()&#xa;RCLCPP_INFO: err / lvel / rvel / time(ms)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ef9a9a;strokeColor=#c62828;strokeWidth=2;fontSize=10;align=left;spacingLeft=6;" vertex="1" parent="1">
+          <mxGeometry x="1210" y="376" width="400" height="72" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- 키보드 스레드 -->
+        <!-- ============================================================ -->
+        <mxCell id="bg_key" value="⌨️  keyboardLoop()  —  별도 std::thread  |  atomic&lt;bool&gt; mode_, running_" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e2d5f0;strokeColor=#6f42c1;strokeWidth=3;verticalAlign=top;fontStyle=1;fontSize=12;opacity=60;" vertex="1" parent="1">
+          <mxGeometry x="700" y="870" width="470" height="240" as="geometry" />
+        </mxCell>
+
+        <mxCell id="K1" value="termios raw 모드 설정&#xa;c_lflag &amp;= ~(ICANON | ECHO)&#xa;즉시 문자 입력, 화면 출력 없음" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ce93d8;strokeColor=#6f42c1;strokeWidth=2;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="720" y="915" width="210" height="62" as="geometry" />
+        </mxCell>
+
+        <mxCell id="K2" value="while (running_) :&#xa;  select(STDIN, 100ms timeout)&#xa;  's' → mode_ = true  (START)&#xa;  'q' → mode_ = false (STOP)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ce93d8;strokeColor=#6f42c1;strokeWidth=2;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="950" y="915" width="210" height="75" as="geometry" />
+        </mxCell>
+
+        <mxCell id="K3" value="종료 시:&#xa;running_ = false (소멸자)&#xa;tcsetattr(oldt) 터미널 복구&#xa;key_thread_.join()" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ce93d8;strokeColor=#6f42c1;strokeWidth=2;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="835" y="1010" width="200" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- 디버그 시각화 -->
+        <!-- ============================================================ -->
+        <mxCell id="bg_vis" value="🖥️  디버그 시각화  —  drawResult() + cv::imshow" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff3cd;strokeColor=#856404;strokeWidth=3;verticalAlign=top;fontStyle=1;fontSize=12;opacity=60;" vertex="1" parent="1">
+          <mxGeometry x="250" y="870" width="430" height="240" as="geometry" />
+        </mxCell>
+
+        <mxCell id="V1" value="cvtColor(bin_roi, GRAY2BGR)&#xa;컬러 도형 그리기 위해 3채널 변환" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe082;strokeColor=#856404;strokeWidth=2;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="270" y="915" width="390" height="55" as="geometry" />
+        </mxCell>
+
+        <mxCell id="V2" value="for each blob (area ≥ 100) :&#xa;  i == best_idx → 빨간 굵은 박스 (0,0,255) thick=2&#xa;  else          → 파란 얇은 박스 (255,0,0) thick=1&#xa;추적점 circle(last_x, last_y, r=3, red, filled)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe082;strokeColor=#856404;strokeWidth=2;fontSize=10;align=left;spacingLeft=4;" vertex="1" parent="1">
+          <mxGeometry x="270" y="982" width="390" height="75" as="geometry" />
+        </mxCell>
+
+        <mxCell id="V3" value="cv::imshow('1. Raw Video',   frame)&#xa;cv::imshow('2. Binary Debug', display)&#xa;cv::waitKey(1)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe082;strokeColor=#856404;strokeWidth=2;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="270" y="1069" width="390" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- 초기화 블럭 -->
+        <!-- ============================================================ -->
+        <mxCell id="bg_init" value="🟣  초기화  —  생성자 LineTrackerProcessor()" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e5f5;strokeColor=#7b1fa2;strokeWidth=3;verticalAlign=top;fontStyle=1;fontSize=12;opacity=60;" vertex="1" parent="1">
+          <mxGeometry x="1190" y="720" width="440" height="420" as="geometry" />
+        </mxCell>
+
+        <mxCell id="I1" value="Node(&quot;line_tracker_node&quot;)&#xa;mode_=false  k_=0.13  base_vel_=150  running_=true" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1bee7;strokeColor=#7b1fa2;strokeWidth=2;fontSize=10;align=left;spacingLeft=4;" vertex="1" parent="1">
+          <mxGeometry x="1210" y="765" width="400" height="55" as="geometry" />
+        </mxCell>
+
+        <mxCell id="I2" value="declare_parameter(&quot;k&quot;, 0.14)&#xa;declare_parameter(&quot;base_vel&quot;, 120)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1bee7;strokeColor=#7b1fa2;strokeWidth=2;fontSize=10;align=left;spacingLeft=4;" vertex="1" parent="1">
+          <mxGeometry x="1210" y="832" width="400" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="I3" value="sub_qos = KeepLast(10).best_effort()  ← 구독 QoS&#xa;pub_qos = KeepLast(10)  [Reliable]    ← 퍼블리시 QoS" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1bee7;strokeColor=#7b1fa2;strokeWidth=2;fontSize=10;align=left;spacingLeft=4;" vertex="1" parent="1">
+          <mxGeometry x="1210" y="894" width="400" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="I4" value="create_subscription&lt;CompressedImage&gt;(&quot;Image_Topic&quot;, sub_qos)&#xa;create_publisher&lt;Vector3&gt;(&quot;topic_dxlpub&quot;, pub_qos)&#xa;last_line_x_=320.0  last_line_y_=45.0&#xa;key_thread_ = std::thread(keyboardLoop)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1bee7;strokeColor=#7b1fa2;strokeWidth=2;fontSize=10;align=left;spacingLeft=4;" vertex="1" parent="1">
+          <mxGeometry x="1210" y="956" width="400" height="72" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- 핵심 상수 요약 박스 -->
+        <!-- ============================================================ -->
+        <mxCell id="const_box" value="📌 핵심 임계값 요약&#xa;ROI  : 하단 1/4  (rows*3/4 ~ rows)&#xa;정규화: 평균 → 100&#xa;이진화: 임계값 150  (평균+50)&#xa;면적  : &gt; 100px  (노이즈 제거)&#xa;1단계: ≤ 150px  (넓은 탐색)&#xa;2단계: ≤  30px  (좁은 확정)&#xa;초기점: (320, 45)  640px 화면 기준" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e3f2fd;strokeColor=#1565c0;strokeWidth=2;fontSize=10;align=left;spacingLeft=6;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1660" y="55" width="250" height="180" as="geometry" />
+        </mxCell>
+
+        <!-- 파라미터 튜닝 박스 -->
+        <mxCell id="param_box" value="⚙️ 런타임 파라미터 튜닝&#xa;ros2 param set /line_tracker_node k 0.15&#xa;ros2 param set /line_tracker_node base_vel 100&#xa;&#xa;k        : P 제어 게인 (기본 0.14)&#xa;base_vel : 직진 속도  (기본 120)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e3f2fd;strokeColor=#1565c0;strokeWidth=2;fontSize=10;align=left;spacingLeft=6;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1660" y="260" width="250" height="140" as="geometry" />
+        </mxCell>
+
+        <!-- QoS 요약 박스 -->
+        <mxCell id="qos_box" value="📡 토픽 / QoS 요약&#xa;구독: Image_Topic&#xa;  타입: CompressedImage&#xa;  QoS : BestEffort KeepLast(10)&#xa;  이유: 영상은 최신성 우선&#xa;&#xa;발행: topic_dxlpub&#xa;  타입: geometry_msgs/Vector3&#xa;  QoS : Reliable KeepLast(10)&#xa;  이유: 모터 명령은 손실 불가" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e3f2fd;strokeColor=#1565c0;strokeWidth=2;fontSize=10;align=left;spacingLeft=6;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1660" y="425" width="250" height="200" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- EDGES (화살표) -->
+        <!-- ============================================================ -->
+
+        <!-- Camera → P0 (센싱정보) -->
+        <mxCell id="e_cam_p0" value="센싱정보&#xa;Image_Topic&#xa;BestEffort QoS" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=3;strokeColor=#0066cc;fontStyle=1;fontSize=10;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" source="camera" target="P0" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- 인지 내부 수직 흐름 -->
+        <mxCell id="e_p01" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=1;strokeColor=#2e7d32;" edge="1" source="P0" target="P1" parent="1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e_p12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=1;strokeColor=#2e7d32;" edge="1" source="P1" target="P2" parent="1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e_p23" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=1;strokeColor=#2e7d32;" edge="1" source="P2" target="P3" parent="1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e_p34" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=1;strokeColor=#2e7d32;" edge="1" source="P3" target="P4" parent="1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e_p45" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=1;strokeColor=#2e7d32;" edge="1" source="P4" target="P5" parent="1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e_p56" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=1;strokeColor=#2e7d32;" edge="1" source="P5" target="P6" parent="1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e_p67" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=1;strokeColor=#2e7d32;" edge="1" source="P6" target="P7" parent="1"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- P7 → D1 (환경인식) -->
+        <mxCell id="e_perc_deci" value="환경인식&#xa;bin_roi / stats / centroids" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=3;strokeColor=#388e3c;fontStyle=1;fontSize=10;" edge="1" source="P7" target="D1" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- 판단 내부 수직 흐름 -->
+        <mxCell id="e_d12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=1;strokeColor=#f57f17;" edge="1" source="D1" target="D2" parent="1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e_d23" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=1;strokeColor=#f57f17;" edge="1" source="D2" target="D3" parent="1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e_d34" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=1;strokeColor=#f57f17;" edge="1" source="D3" target="D4" parent="1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e_d45" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=1;strokeColor=#f57f17;" edge="1" source="D4" target="D5" parent="1"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- D5 → D6 (Yes) -->
+        <mxCell id="e_d5_yes" value="Yes  ≤30px" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=2;strokeColor=#2e7d32;fontStyle=1;fontSize=10;" edge="1" source="D5" target="D6" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points"><mxPoint x="860" y="556" /></Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- D5 → D7 (No) -->
+        <mxCell id="e_d5_no" value="No  &gt;30px" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=2;strokeColor=#c62828;fontStyle=1;fontSize=10;" edge="1" source="D5" target="D7" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points"><mxPoint x="1010" y="556" /></Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- D6 → D8 -->
+        <mxCell id="e_d68" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=1;strokeColor=#f57f17;" edge="1" source="D6" target="D8" parent="1"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- D7 → D8 -->
+        <mxCell id="e_d78" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=1;strokeColor=#f57f17;" edge="1" source="D7" target="D8" parent="1"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- D8 → D9 -->
+        <mxCell id="e_d89" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=1;strokeColor=#f57f17;" edge="1" source="D8" target="D9" parent="1"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- D9 → C1 (ON) -->
+        <mxCell id="e_d9_c1" value="ON  (mode_=true)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=3;strokeColor=#c62828;fontStyle=1;fontSize=10;exitX=1;exitY=0.3;exitDx=0;exitDy=0;" edge="1" source="D9" target="C1" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- D9 → C2 (OFF) -->
+        <mxCell id="e_d9_c2" value="OFF  (mode_=false)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=2;strokeColor=#888;fontStyle=1;fontSize=10;exitX=1;exitY=0.7;exitDx=0;exitDy=0;" edge="1" source="D9" target="C2" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1180" y="740" />
+              <mxPoint x="1180" y="232" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- C1 → C3 -->
+        <mxCell id="e_c13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=1;strokeColor=#c62828;" edge="1" source="C1" target="C3" parent="1"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- C2 → C3 -->
+        <mxCell id="e_c23" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=1;strokeColor=#c62828;" edge="1" source="C2" target="C3" parent="1"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- C3 → C4 -->
+        <mxCell id="e_c34" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=1;strokeColor=#c62828;" edge="1" source="C3" target="C4" parent="1"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- C3 → Motor (제어명령) -->
+        <mxCell id="e_c3_motor" value="제어명령&#xa;topic_dxlpub&#xa;Reliable QoS" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=3;strokeColor=#dc3545;fontStyle=1;fontSize=10;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" source="C3" target="motor" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- K1 → K2 -->
+        <mxCell id="e_k12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=1;strokeColor=#6f42c1;" edge="1" source="K1" target="K2" parent="1"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- K2 → K3 (종료) -->
+        <mxCell id="e_k23" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=1;strokeColor=#6f42c1;dashed=1;" edge="1" source="K2" target="K3" parent="1"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- K2 → D9 (atomic mode_) -->
+        <mxCell id="e_key_mode" value="atomic mode_&#xa;(std::atomic&lt;bool&gt;)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=2;strokeColor=#6f42c1;dashed=1;fontStyle=2;fontSize=10;" edge="1" source="K2" target="D9" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- V1 → V2 → V3 -->
+        <mxCell id="e_v12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=1;strokeColor=#856404;" edge="1" source="V1" target="V2" parent="1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e_v23" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=1;strokeColor=#856404;" edge="1" source="V2" target="V3" parent="1"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- P2 → V1 (dashed: frame) -->
+        <mxCell id="e_p2_vis" value="frame" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=1;strokeColor=#856404;dashed=1;fontStyle=2;fontSize=10;" edge="1" source="P2" target="V1" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- D6 → V2 (dashed: best_idx, last_x/y) -->
+        <mxCell id="e_d6_vis" value="best_idx&#xa;last_x/y" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=1;strokeColor=#856404;dashed=1;fontStyle=2;fontSize=10;" edge="1" source="D6" target="V2" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- P7 → V1 (dashed: bin_roi) -->
+        <mxCell id="e_p7_vis" value="bin_roi" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=1;strokeColor=#856404;dashed=1;fontStyle=2;fontSize=10;" edge="1" source="P7" target="V1" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
